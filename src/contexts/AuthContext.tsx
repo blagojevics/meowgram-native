@@ -7,8 +7,9 @@ import {
   signOut,
   User,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from "firebase/auth";
-// import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 
@@ -22,7 +23,7 @@ type AuthContextType = {
     profile?: { name: string; username: string }
   ) => Promise<void>;
   logout: () => Promise<void>;
-  // googleSignIn: () => Promise<void>;
+  googleSignIn: (promptAsync: any) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,44 +81,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await signOut(auth);
   };
 
-  // const googleSignIn = async () => {
-  //   try {
-  //     const { default: googleAuth } = await import("../services/googleAuth");
-  //     const { idToken } = await googleAuth.signInWithGoogleAsync();
-  //     if (!idToken) throw new Error("No id token returned from Google");
+  const googleSignIn = async (promptAsync: any) => {
+    try {
+      if (!promptAsync) {
+        throw new Error("Google auth not initialized");
+      }
 
-  //     const credential = GoogleAuthProvider.credential(idToken);
-  //     const result = await signInWithCredential(auth, credential);
+      // The promptAsync is already called in the LoginScreen
+      // We just need to get the ID token and authenticate with Firebase
+      const { signInWithGoogleAsync } = await import("../services/googleAuth");
+      const { idToken } = await signInWithGoogleAsync(promptAsync);
 
-  //     // Create user doc if new
-  //     const user = result.user;
-  //     const userRef = doc(db, "users", user.uid);
-  //     await setDoc(
-  //       userRef,
-  //       {
-  //         uid: user.uid,
-  //         username: user.displayName?.toLowerCase().replace(/\s+/g, "") || "",
-  //         displayName: user.displayName || user.email,
-  //         email: user.email,
-  //         avatarUrl: user.photoURL || "",
-  //         bio: "",
-  //         followersCount: 0,
-  //         followingCount: 0,
-  //         postsCount: 0,
-  //         onboardingComplete: false,
-  //         createdAt: serverTimestamp(),
-  //       },
-  //       { merge: true }
-  //     );
-  //   } catch (error) {
-  //     console.error("Google sign-in failed:", error);
-  //     throw error;
-  //   }
-  // };
+      if (!idToken) throw new Error("No id token returned from Google");
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
+
+      // Create user doc if new
+      const user = result.user;
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(
+        userRef,
+        {
+          uid: user.uid,
+          username: user.displayName?.toLowerCase().replace(/\s+/g, "") || "",
+          displayName: user.displayName || user.email,
+          email: user.email,
+          avatarUrl: user.photoURL || "",
+          bio: "",
+          followersCount: 0,
+          followingCount: 0,
+          postsCount: 0,
+          onboardingComplete: false,
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+      throw error;
+    }
+  };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout /* googleSignIn */ }}
+      value={{ user, loading, login, register, logout, googleSignIn }}
     >
       {children}
     </AuthContext.Provider>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 interface PostPreviewProps {
   postId: string;
@@ -30,7 +31,12 @@ const PostPreview: React.FC<PostPreviewProps> = ({ postId }) => {
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: post.imageUrl }} style={styles.image} />
+      <Image
+        source={{
+          uri: getOptimizedImageUrl(post.imageUrl, "thumbnail"),
+        }}
+        style={styles.image}
+      />
     </View>
   );
 };

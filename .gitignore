@@ -42,6 +42,7 @@ yarn-error.*
 *.p8
 serviceAccountKey.json
 firebase-config.json
+firestore.rules
 
 # IDE
 .vscode/

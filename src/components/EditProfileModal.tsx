@@ -18,6 +18,7 @@ import {
   CLOUDINARY_UPLOAD_PRESET,
 } from "../config/cloudinary";
 import { moderateImageWithAI } from "../services/aiModeration";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 interface UserProfile {
   uid: string;
@@ -313,7 +314,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {avatarUrl ? (
               <View style={{ alignItems: "center", marginBottom: 10 }}>
                 <Image
-                  source={{ uri: avatarUrl }}
+                  source={{
+                    uri: getOptimizedImageUrl(avatarUrl, "thumbnail"),
+                  }}
                   style={{
                     width: 80,
                     height: 80,

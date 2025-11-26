@@ -9,11 +9,14 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import ScreenHeader from "../components/ScreenHeader";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 import {
   collection,
   query,
@@ -322,7 +325,9 @@ const NotificationsScreen: React.FC = () => {
         <Image
           source={
             fromUser?.avatarUrl
-              ? { uri: fromUser.avatarUrl }
+              ? {
+                  uri: getOptimizedImageUrl(fromUser.avatarUrl, "thumbnail"),
+                }
               : require("../../assets/placeholderImg.jpg")
           }
           style={styles.avatar}
@@ -354,21 +359,22 @@ const NotificationsScreen: React.FC = () => {
 
   if (!user) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.bgPrimary }]}
+      >
+        <ScreenHeader title="Notifications" showLogo={false} />
         <Text style={{ color: colors.textPrimary }}>
           Please log in to view notifications
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Notifications
-        </Text>
-      </View>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.bgPrimary }]}
+    >
+      <ScreenHeader title="Notifications" showLogo={false} />
 
       {initialLoading ? (
         <ActivityIndicator
@@ -402,7 +408,7 @@ const NotificationsScreen: React.FC = () => {
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -411,16 +417,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width > 550 ? width * 0.5 : width,
     alignSelf: "center",
-  },
-  header: {
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
   loader: {
     flex: 1,

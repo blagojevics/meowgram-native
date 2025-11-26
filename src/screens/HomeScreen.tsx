@@ -12,7 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import Post from "../components/Post";
-import HomeScreenHeader from "../components/HomeScreenHeader";
+import ScreenHeader from "../components/ScreenHeader";
+import { prefetchImages } from "../services/imageOptimization";
 import {
   collection,
   query,
@@ -84,6 +85,17 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         }));
         setPosts(postsData);
         setLoadingPosts(false);
+
+        // Prefetch first 5 images for faster loading
+        const imagesToPrefetch = postsData
+          .slice(0, 5)
+          .map((post: any) => post.imageUrl)
+          .filter((url: any) => url);
+        if (imagesToPrefetch.length > 0) {
+          prefetchImages(imagesToPrefetch).catch((err) =>
+            console.log("Prefetch failed (non-critical):", err)
+          );
+        }
       },
       () => {
         setError("Failed to load posts");
@@ -143,7 +155,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.bgPrimary }]}
       edges={["top"]}
     >
-      <HomeScreenHeader />
+      <ScreenHeader
+        showLogo={true}
+        showChatIcon={true}
+        showThemeToggle={true}
+      />
       <FlatList
         ref={flatListRef}
         data={posts}

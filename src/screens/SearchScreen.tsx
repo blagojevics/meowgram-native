@@ -10,12 +10,16 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import ScreenHeader from "../components/ScreenHeader";
+import ProgressiveImage from "../components/ProgressiveImage";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 import {
   collection,
   query,
@@ -61,6 +65,11 @@ const SearchScreen: React.FC = () => {
   const [recommendedUsers, setRecommendedUsers] = useState<UserResult[]>([]);
   const [recommendedPosts, setRecommendedPosts] = useState<PostResult[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Load recommended content on mount
+  useEffect(() => {
+    fetchRecommended();
+  }, []);
 
   // Debounced search
   useEffect(() => {
@@ -234,75 +243,88 @@ const SearchScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const renderUserResult = ({ item }: { item: UserResult }) => (
-    <TouchableOpacity
-      style={[styles.userResult, { backgroundColor: colors.bgSecondary }]}
-      onPress={() => {
-        // Navigate to user profile (use Firestore doc id)
-        navigation.navigate("UserProfile", { userId: item.id });
-      }}
-    >
-      <Image
-        source={
-          item.avatarUrl
-            ? { uri: item.avatarUrl }
-            : require("../../assets/placeholderImg.jpg")
-        }
-        style={styles.userAvatar}
-      />
-      <View style={styles.userInfo}>
-        <Text style={[styles.username, { color: colors.textPrimary }]}>
-          {item.username}
-        </Text>
-        {item.bio && (
-          <Text
-            style={[styles.userBio, { color: colors.textSecondary }]}
-            numberOfLines={1}
-          >
-            {item.bio}
+  const renderUserResult = React.useCallback(
+    ({ item }: { item: UserResult }) => (
+      <TouchableOpacity
+        style={[styles.userResult, { backgroundColor: colors.bgSecondary }]}
+        onPress={() => {
+          // Navigate to user profile (use Firestore doc id)
+          navigation.navigate("UserProfile", { userId: item.id });
+        }}
+      >
+        <Image
+          source={
+            item.avatarUrl
+              ? {
+                  uri: getOptimizedImageUrl(item.avatarUrl, "thumbnail"),
+                }
+              : require("../../assets/placeholderImg.jpg")
+          }
+          style={styles.userAvatar}
+        />
+        <View style={styles.userInfo}>
+          <Text style={[styles.username, { color: colors.textPrimary }]}>
+            {item.username}
           </Text>
-        )}
-      </View>
-    </TouchableOpacity>
+          {item.bio && (
+            <Text
+              style={[styles.userBio, { color: colors.textSecondary }]}
+              numberOfLines={1}
+            >
+              {item.bio}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    ),
+    [colors, navigation]
   );
 
-  const renderPostResult = ({ item }: { item: PostResult }) => (
-    <TouchableOpacity
-      style={[styles.postResult, { backgroundColor: colors.bgSecondary }]}
-      onPress={() => {
-        // Navigate to post detail
-        navigation.navigate("PostDetail", { postId: item.id });
-      }}
-    >
-      <Image
-        source={
-          item.imageUrl
-            ? { uri: item.imageUrl }
-            : require("../../assets/placeholderImg.jpg")
-        }
-        style={styles.postImage}
-      />
-      <View style={styles.postInfo}>
-        <Text
-          style={[styles.postCaption, { color: colors.textPrimary }]}
-          numberOfLines={2}
-        >
-          {item.caption || "No caption"}
-        </Text>
-        <Text style={[styles.postUser, { color: colors.textSecondary }]}>
-          by {item.username}
-        </Text>
-      </View>
-    </TouchableOpacity>
+  const renderPostResult = React.useCallback(
+    ({ item }: { item: PostResult }) => (
+      <TouchableOpacity
+        style={[styles.postResult, { backgroundColor: colors.bgSecondary }]}
+        onPress={() => {
+          // Navigate to post detail
+          navigation.navigate("PostDetail", { postId: item.id });
+        }}
+      >
+        {item.imageUrl ? (
+          <Image
+            source={{
+              uri: getOptimizedImageUrl(item.imageUrl, "medium"),
+            }}
+            style={styles.postImage}
+            resizeMode="cover"
+            defaultSource={require("../../assets/placeholderImg.jpg")}
+          />
+        ) : (
+          <Image
+            source={require("../../assets/placeholderImg.jpg")}
+            style={styles.postImage}
+          />
+        )}
+        <View style={styles.postInfo}>
+          <Text
+            style={[styles.postCaption, { color: colors.textPrimary }]}
+            numberOfLines={2}
+          >
+            {item.caption || "No caption"}
+          </Text>
+          <Text style={[styles.postUser, { color: colors.textSecondary }]}>
+            by {item.username}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    ),
+    [colors, navigation]
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Search
-        </Text>
-      </View>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.bgPrimary }]}
+    >
+      <ScreenHeader title="Search" showLogo={false} />
 
       {/* Search Input */}
       <View
@@ -455,7 +477,7 @@ const SearchScreen: React.FC = () => {
           onRefresh={handleRefresh}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -464,16 +486,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width > 550 ? width * 0.5 : width,
     alignSelf: "center",
-  },
-  header: {
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
   content: {
     flex: 1,

@@ -21,6 +21,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 interface CommentItemProps {
   comment: any;
@@ -172,7 +173,12 @@ const CommentItem: React.FC<CommentItemProps> = ({
       <TouchableOpacity style={styles.commentUserLink}>
         {author?.avatarUrl || author?.photoURL ? (
           <Image
-            source={{ uri: author?.avatarUrl || author?.photoURL }}
+            source={{
+              uri: getOptimizedImageUrl(
+                author?.avatarUrl || author?.photoURL || "",
+                "thumbnail"
+              ),
+            }}
             style={styles.commentAvatar}
           />
         ) : (

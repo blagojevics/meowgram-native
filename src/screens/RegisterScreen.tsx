@@ -9,6 +9,9 @@ import {
   Dimensions,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -31,9 +34,40 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleRegister = async () => {
     setError(null);
+
+    // Validate username format
+    const usernameRegex = /^[a-z0-9_.]+$/;
+    const cleanUsername = username.toLowerCase().trim();
+
+    if (!cleanUsername) {
+      setError("Username is required");
+      Alert.alert("Validation Error", "Username is required");
+      return;
+    }
+
+    if (!usernameRegex.test(cleanUsername)) {
+      setError(
+        "Username can only contain lowercase letters, numbers, underscores (_) and periods (.)"
+      );
+      Alert.alert(
+        "Invalid Username",
+        "Username can only contain lowercase letters, numbers, underscores (_) and periods (.)"
+      );
+      return;
+    }
+
+    if (cleanUsername.length < 3) {
+      setError("Username must be at least 3 characters long");
+      Alert.alert(
+        "Invalid Username",
+        "Username must be at least 3 characters long"
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await register(email, password, { name, username });
+      await register(email, password, { name, username: cleanUsername });
       Alert.alert("Account created");
       // After register, navigate to the app main tabs
       navigation.replace("MainTabs");
@@ -57,75 +91,89 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   // };
 
   return (
-    <ImageBackground
-      source={{
-        uri: "https://img.freepik.com/free-photo/old-cement-wall-texture_1149-1280.jpg?semt=ais_hybrid&w=740&q=80",
-      }}
-      style={styles.background}
-      resizeMode="cover"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
     >
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <View style={styles.left}>
-            <Text style={styles.leftTitle}>Meowgram.</Text>
-            <Text style={styles.leftText}>
-              The social network exclusively for our feline friends.
-            </Text>
-            <Text style={styles.leftSpan}>Do you have an account?</Text>
-            <Pressable
-              style={styles.loginButton}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </Pressable>
-          </View>
-          <View style={styles.right}>
-            <Text style={styles.rightTitle}>Register</Text>
-            <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                placeholder="Your Name"
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Unique Username"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
-              <Pressable
-                style={[
-                  styles.registerButton,
-                  isLoading && styles.disabledButton,
-                ]}
-                onPress={handleRegister}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="black" />
-                ) : (
-                  <Text style={styles.buttonText}>Register</Text>
-                )}
-              </Pressable>
-              {/* <Pressable
+      <ImageBackground
+        source={{
+          uri: "https://img.freepik.com/free-photo/old-cement-wall-texture_1149-1280.jpg?semt=ais_hybrid&w=740&q=80",
+        }}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.overlay}>
+            <View style={styles.card}>
+              <View style={styles.left}>
+                <Text style={styles.leftTitle}>Meowgram.</Text>
+                <Text style={styles.leftText}>
+                  The social network exclusively for our feline friends.
+                </Text>
+                <Text style={styles.leftSpan}>Do you have an account?</Text>
+                <Pressable
+                  style={styles.loginButton}
+                  onPress={() => navigation.navigate("Login")}
+                >
+                  <Text style={styles.buttonText}>Login</Text>
+                </Pressable>
+              </View>
+              <View style={styles.right}>
+                <Text style={styles.rightTitle}>Register</Text>
+                <View style={styles.form}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Your Name"
+                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    value={name}
+                    onChangeText={setName}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Username (lowercase, numbers, _ or .)"
+                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    value={username}
+                    onChangeText={(text) => setUsername(text.toLowerCase())}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                  {error && <Text style={styles.error}>{error}</Text>}
+                  <Pressable
+                    style={[
+                      styles.registerButton,
+                      isLoading && styles.disabledButton,
+                    ]}
+                    onPress={handleRegister}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="black" />
+                    ) : (
+                      <Text style={styles.buttonText}>Register</Text>
+                    )}
+                  </Pressable>
+                  {/* <Pressable
                 style={[
                   styles.googleButton,
                   isLoading && styles.disabledButton,
@@ -144,11 +192,13 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   </View>
                 )}
               </Pressable> */}
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
-    </ImageBackground>
+        </ScrollView>
+      </ImageBackground>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -229,6 +279,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     paddingVertical: 10,
+    color: "#000",
+    backgroundColor: "transparent",
   },
   error: {
     color: "red",

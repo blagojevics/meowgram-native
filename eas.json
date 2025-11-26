@@ -14,6 +14,11 @@
     "production": {
       "autoIncrement": true
     },
+    "internal": {
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
     "emulator": {
       "android": {
         "buildType": "apk"

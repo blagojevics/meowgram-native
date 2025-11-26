@@ -12,6 +12,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 interface FollowUser {
   id: string;
@@ -72,7 +73,9 @@ const FollowListModal: React.FC<FollowListModalProps> = ({
       <Image
         source={
           item.avatarUrl
-            ? { uri: item.avatarUrl }
+            ? {
+                uri: getOptimizedImageUrl(item.avatarUrl, "thumbnail"),
+              }
             : require("../../assets/placeholderImg.jpg")
         }
         style={{

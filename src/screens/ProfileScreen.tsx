@@ -42,7 +42,8 @@ import CommentInput from "../components/CommentInput";
 import LikesListModal from "../components/LikesListModal";
 import FollowListModal from "../components/FollowListModal";
 import EditProfileModal from "../components/EditProfileModal";
-import timeFormat from "../config/timeFormat";
+import ProgressiveImage from "../components/ProgressiveImage";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 type ProfileScreenRouteProp = RouteProp<RootStackParamList, "UserProfile">;
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
@@ -206,27 +207,43 @@ const ProfileScreen: React.FC = () => {
     const targetUserRef = doc(db, "users", userId);
     const followingRef = doc(db, "users", authUser.uid, "following", userId);
     const followerRef = doc(db, "users", userId, "followers", authUser.uid);
+
+    console.log("[FOLLOW] Starting follow toggle...");
+    console.log(`[FOLLOW] Current User ID: ${authUser.uid}`);
+    console.log(`[FOLLOW] Target User ID: ${userId}`);
+    console.log(`[FOLLOW] Is Following: ${isFollowing}`);
+
     try {
       if (isFollowing) {
+        console.log("[FOLLOW] Unfollowing user...");
         await deleteDoc(followingRef);
+        console.log("[FOLLOW] Deleted following doc");
         await deleteDoc(followerRef);
+        console.log("[FOLLOW] Deleted follower doc");
         await updateDoc(currentUserRef, { followingCount: increment(-1) });
+        console.log("[FOLLOW] Updated current user following count");
         await updateDoc(targetUserRef, { followersCount: increment(-1) });
+        console.log("[FOLLOW] Updated target user followers count");
       } else {
+        console.log("[FOLLOW] Following user...");
         await setDoc(followingRef, {
           uid: userId,
           username: profileData?.username,
           avatarUrl: profileData?.avatarUrl,
           followedAt: new Date(),
         });
+        console.log("[FOLLOW] Created following doc");
         await setDoc(followerRef, {
           uid: authUser.uid,
           username: authUser.displayName || authUser.email,
           avatarUrl: "",
           followedAt: new Date(),
         });
+        console.log("[FOLLOW] Created follower doc");
         await updateDoc(currentUserRef, { followingCount: increment(1) });
+        console.log("[FOLLOW] Updated current user following count");
         await updateDoc(targetUserRef, { followersCount: increment(1) });
+        console.log("[FOLLOW] Updated target user followers count");
         if (userId !== authUser.uid) {
           await addDoc(collection(db, "notifications"), {
             userId: userId,
@@ -235,10 +252,12 @@ const ProfileScreen: React.FC = () => {
             createdAt: serverTimestamp(),
             read: false,
           });
+          console.log("[FOLLOW] Created follow notification");
         }
       }
+      console.log("[FOLLOW] Follow/unfollow completed successfully");
     } catch (err) {
-      console.error("Follow/unfollow error:", err);
+      console.error("[FOLLOW] Follow/unfollow error:", err);
       Alert.alert("Error", "Failed to update follow status");
     } finally {
       setLoadingFollow(false);
@@ -249,20 +268,30 @@ const ProfileScreen: React.FC = () => {
     if (!authUser) return;
     const postRef = doc(db, "posts", post.id);
     const alreadyLiked = post.likedByUsers?.includes(authUser.uid);
+
+    console.log("[LIKE] Starting like toggle...");
+    console.log(`[LIKE] User ID: ${authUser.uid}`);
+    console.log(`[LIKE] Post ID: ${post.id}`);
+    console.log(`[LIKE] Already Liked: ${alreadyLiked}`);
+
     try {
       if (alreadyLiked) {
+        console.log("[LIKE] Removing like...");
         await updateDoc(postRef, {
           likedByUsers: arrayRemove(authUser.uid),
           likesCount: increment(-1),
         });
+        console.log("[LIKE] Like removed successfully");
       } else {
+        console.log("[LIKE] Adding like...");
         await updateDoc(postRef, {
           likedByUsers: arrayUnion(authUser.uid),
           likesCount: increment(1),
         });
+        console.log("[LIKE] Like added successfully");
       }
     } catch (err) {
-      console.error("Error toggling like:", err);
+      console.error("[LIKE] Error toggling like:", err);
     }
   };
 
@@ -310,15 +339,19 @@ const ProfileScreen: React.FC = () => {
       }}
       onPress={() => navigation.navigate("PostDetail", { postId: item.id })}
     >
-      <Image
-        source={
-          item.imageUrl
-            ? { uri: item.imageUrl }
-            : require("../../assets/placeholderImg.jpg")
-        }
-        style={{ width: "100%", height: "100%" }}
-        resizeMode="cover"
-      />
+      {item.imageUrl ? (
+        <ProgressiveImage
+          source={item.imageUrl}
+          style={{ width: "100%", height: "100%" }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Image
+          source={require("../../assets/placeholderImg.jpg")}
+          style={{ width: "100%", height: "100%" }}
+          resizeMode="cover"
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -419,7 +452,9 @@ const ProfileScreen: React.FC = () => {
         >
           {profileData.avatarUrl ? (
             <Image
-              source={{ uri: profileData.avatarUrl }}
+              source={{
+                uri: getOptimizedImageUrl(profileData.avatarUrl, "thumbnail"),
+              }}
               style={{
                 width: 80,
                 height: 80,

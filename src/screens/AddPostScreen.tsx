@@ -29,6 +29,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { moderateImageWithAI } from "../services/aiModeration";
 import { RouteProp, useRoute } from "@react-navigation/native";
+import ScreenHeader from "../components/ScreenHeader";
 
 type AddPostScreenRouteProp = RouteProp<RootStackParamList, "AddPost">;
 
@@ -202,20 +203,25 @@ const AddPostScreen: React.FC = () => {
     try {
       let uploadUri = imageUri;
 
-      // If expo-image-manipulator is installed, resize/compress before upload to save bandwidth
+      // Compress and resize before upload to optimize for fast loading
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const ImageManipulator = require("expo-image-manipulator");
         if (ImageManipulator && ImageManipulator.manipulateAsync) {
+          // Resize to 1080px width (standard for feeds) and compress to 75% quality
           const manipResult = await ImageManipulator.manipulateAsync(
             imageUri,
             [{ resize: { width: 1080 } }],
-            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+            {
+              compress: 0.75,
+              format: ImageManipulator.SaveFormat.JPEG,
+            }
           );
           uploadUri = manipResult.uri;
+          console.log("Image optimized before upload");
         }
       } catch (e) {
-        // manipulator not available — upload original
+        console.log("Image manipulator not available, uploading original");
       }
 
       const formData = new FormData();
@@ -250,6 +256,8 @@ const AddPostScreen: React.FC = () => {
         "cloud_name",
         process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME!
       );
+      // Enable automatic optimization on Cloudinary's end
+      formData.append("quality", "auto");
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -328,40 +336,17 @@ const AddPostScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+      <ScreenHeader
+        title="Create New Post"
+        showLogo={false}
+        showBackButton={true}
+        onBackPress={() => navigation.goBack()}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }}>
-          {/* Header */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: 30,
-              justifyContent: "space-between",
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={{ padding: 8, marginRight: 15 }}
-            >
-              <Text style={{ fontSize: 18, color: colors.brandPrimary }}>
-                ← Back
-              </Text>
-            </TouchableOpacity>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "bold",
-                color: colors.textPrimary,
-              }}
-            >
-              Create New Post
-            </Text>
-            <View style={{ width: 44 }} />
-          </View>
-
           {/* Image Picker */}
           <TouchableOpacity
             onPress={showImageOptions}

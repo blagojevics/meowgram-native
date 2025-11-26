@@ -11,6 +11,7 @@ import {
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useTheme } from "../contexts/ThemeContext";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 interface LikesListModalProps {
   isOpen: boolean;
@@ -50,7 +51,9 @@ const LikesListModal: React.FC<LikesListModalProps> = ({
       <Image
         source={
           item.avatarUrl
-            ? { uri: item.avatarUrl }
+            ? {
+                uri: getOptimizedImageUrl(item.avatarUrl, "thumbnail"),
+              }
             : require("../../assets/placeholderImg.jpg")
         }
         style={styles.avatar}

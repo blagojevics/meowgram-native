@@ -16,6 +16,7 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 import {
   deleteDoc,
   doc,
@@ -38,6 +39,7 @@ import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
 import CommentsModal from "./CommentsModal";
 import LikesListModal from "./LikesListModal";
+import ProgressiveImage from "./ProgressiveImage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -141,42 +143,83 @@ export default function Post({
     isUpdatingLike.current = true;
     const postDocRef = doc(db, "posts", post.id);
     const userId = currentUser.uid;
+
+    console.log("[LIKE-POST] Starting like toggle on post...");
+    console.log(`[LIKE-POST] User ID: ${userId}`);
+    console.log(`[LIKE-POST] Post ID: ${post.id}`);
+    console.log(`[LIKE-POST] Is Liked: ${isLiked}`);
+
     try {
       if (isLiked) {
-        await updateDoc(postDocRef, {
-          likesCount: increment(-1),
-          likedByUsers: arrayRemove(userId),
-        });
-      } else {
-        await updateDoc(postDocRef, {
-          likesCount: increment(1),
-          likedByUsers: arrayUnion(userId),
-        });
-        if (post.userId !== currentUser.uid) {
-          // Check if notification already exists
-          const existingNotificationQuery = query(
-            collection(db, "notifications"),
-            where("userId", "==", post.userId),
-            where("fromUserId", "==", currentUser.uid),
-            where("type", "==", "like"),
-            where("postId", "==", post.id)
+        console.log("[LIKE-POST] Removing like from post...");
+        try {
+          await updateDoc(postDocRef, {
+            likesCount: increment(-1),
+            likedByUsers: arrayRemove(userId),
+          });
+          console.log("[LIKE-POST] Like removed from post successfully");
+        } catch (updateError: any) {
+          console.error(
+            "[LIKE-POST] ERROR UPDATING POST (UNLIKE):",
+            updateError?.message
           );
-          const existingSnap = await getDocs(existingNotificationQuery);
-          if (existingSnap.empty) {
-            await addDoc(collection(db, "notifications"), {
-              userId: post.userId,
-              fromUserId: currentUser.uid,
-              type: "like",
-              postId: post.id,
-              postCaption: post.caption,
-              createdAt: serverTimestamp(),
-              read: false,
-            });
+          throw updateError;
+        }
+      } else {
+        console.log("[LIKE-POST] Adding like to post...");
+        try {
+          await updateDoc(postDocRef, {
+            likesCount: increment(1),
+            likedByUsers: arrayUnion(userId),
+          });
+          console.log("[LIKE-POST] Like added to post successfully");
+        } catch (updateError: any) {
+          console.error(
+            "[LIKE-POST] ERROR UPDATING POST (LIKE):",
+            updateError?.message
+          );
+          throw updateError;
+        }
+
+        if (post.userId !== currentUser.uid) {
+          try {
+            // Check if notification already exists
+            const existingNotificationQuery = query(
+              collection(db, "notifications"),
+              where("userId", "==", post.userId),
+              where("fromUserId", "==", currentUser.uid),
+              where("type", "==", "like"),
+              where("postId", "==", post.id)
+            );
+            const existingSnap = await getDocs(existingNotificationQuery);
+            if (existingSnap.empty) {
+              await addDoc(collection(db, "notifications"), {
+                userId: post.userId,
+                fromUserId: currentUser.uid,
+                type: "like",
+                postId: post.id,
+                postCaption: post.caption,
+                createdAt: serverTimestamp(),
+                read: false,
+              });
+              console.log("[LIKE-POST] Like notification created");
+            }
+          } catch (notifError: any) {
+            console.error(
+              "[LIKE-POST] ERROR CREATING NOTIFICATION:",
+              notifError?.message
+            );
+            // Don't throw - notification failure shouldn't prevent the like
           }
         }
       }
-    } catch (err) {
-      console.error("Error updating like:", err);
+    } catch (err: any) {
+      console.error("[LIKE-POST] Error handling like:", err);
+      console.error("[LIKE-POST] Error code:", err?.code);
+      console.error("[LIKE-POST] Error message:", err?.message);
+      // Revert optimistic update on error
+      setIsLiked(!isLiked);
+      setLikesCount(isLiked ? likesCount + 1 : likesCount - 1);
     } finally {
       isUpdatingLike.current = false;
     }
@@ -291,7 +334,12 @@ export default function Post({
         >
           {postUser?.avatarUrl || postUser?.photoURL ? (
             <Image
-              source={{ uri: postUser?.avatarUrl || postUser?.photoURL }}
+              source={{
+                uri: getOptimizedImageUrl(
+                  postUser?.avatarUrl || postUser?.photoURL || "",
+                  "thumbnail"
+                ),
+              }}
               style={[
                 styles.postHeaderAvatar,
                 { borderColor: colors.borderColor },
@@ -409,15 +457,19 @@ export default function Post({
           (navigation as any).navigate("PostDetail", { postId: post.id });
         }}
       >
-        <Image
-          source={
-            post.imageUrl
-              ? { uri: post.imageUrl }
-              : require("../../assets/placeholderImg.jpg")
-          }
-          style={styles.postImage}
-          resizeMode="cover"
-        />
+        {post.imageUrl ? (
+          <ProgressiveImage
+            source={post.imageUrl}
+            style={styles.postImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image
+            source={require("../../assets/placeholderImg.jpg")}
+            style={styles.postImage}
+            resizeMode="cover"
+          />
+        )}
         <Animated.View
           style={[
             styles.likeAnimation,

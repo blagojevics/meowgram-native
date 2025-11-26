@@ -27,6 +27,10 @@ import AddPostScreen from "../screens/AddPostScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import PostDetailScreen from "../screens/PostDetailScreen";
 import CropImageScreen from "../screens/CropImageScreen";
+import ConversationListScreen from "../screens/ConversationListScreen";
+import ChatDetailScreen from "../screens/ChatDetailScreen";
+import SearchUsersScreen from "../screens/SearchUsersScreen";
+import ConversationInfoScreen from "../screens/ConversationInfoScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -37,6 +41,10 @@ export type RootStackParamList = {
   Settings: undefined;
   PostDetail: { postId: string };
   CropImage: { imageUri: string };
+  ConversationList: undefined;
+  ChatDetail: { conversationId: string };
+  SearchUsers: undefined;
+  ConversationInfo: undefined;
 };
 
 export type MainTabParamList = {
@@ -178,7 +186,7 @@ const AppNavigatorContent: React.FC = () => {
   const { user, loading } = useAuth();
   const { colors } = useTheme();
 
-  console.log("AppNavigator - user:", user, "loading:", loading);
+  // Logging removed to reduce console spam
 
   if (loading) {
     return (
@@ -212,6 +220,26 @@ const AppNavigatorContent: React.FC = () => {
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="CropImage" component={CropImageScreen} />
+          <Stack.Screen
+            name="ConversationList"
+            component={ConversationListScreen}
+            options={{ gestureEnabled: true }}
+          />
+          <Stack.Screen
+            name="ChatDetail"
+            component={ChatDetailScreen}
+            options={{ gestureEnabled: true }}
+          />
+          <Stack.Screen
+            name="SearchUsers"
+            component={SearchUsersScreen}
+            options={{ gestureEnabled: true }}
+          />
+          <Stack.Screen
+            name="ConversationInfo"
+            component={ConversationInfoScreen}
+            options={{ gestureEnabled: true }}
+          />
         </Stack.Navigator>
       ) : (
         // Unauthenticated user - show auth screens

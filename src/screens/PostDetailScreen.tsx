@@ -35,6 +35,8 @@ import timeFormat from "../config/timeFormat";
 import CommentInput from "../components/CommentInput";
 import CommentItem from "../components/CommentItem";
 import LikesListModal from "../components/LikesListModal";
+import ProgressiveImage from "../components/ProgressiveImage";
+import { getOptimizedImageUrl } from "../services/imageOptimization";
 
 type PostDetailScreenRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 type PostDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -172,35 +174,74 @@ const PostDetailScreen: React.FC = () => {
     const postRef = doc(db, "posts", post.id);
     const alreadyLiked = post.likedByUsers?.includes(user.uid);
 
+    console.log("[LIKE-POST-DETAIL] Starting like toggle on post...");
+    console.log(`[LIKE-POST-DETAIL] User ID: ${user.uid}`);
+    console.log(`[LIKE-POST-DETAIL] Post ID: ${post.id}`);
+    console.log(`[LIKE-POST-DETAIL] Is Liked: ${alreadyLiked}`);
+
     try {
       if (isUpdatingLike) return;
       setIsUpdatingLike(true);
+
       if (alreadyLiked) {
-        await updateDoc(postRef, {
-          likedByUsers: arrayRemove(user.uid),
-          likesCount: increment(-1),
-        });
+        console.log("[LIKE-POST-DETAIL] Removing like from post...");
+        try {
+          await updateDoc(postRef, {
+            likedByUsers: arrayRemove(user.uid),
+            likesCount: increment(-1),
+          });
+          console.log("[LIKE-POST-DETAIL] Like removed from post successfully");
+        } catch (updateError: any) {
+          console.error(
+            "[LIKE-POST-DETAIL] ERROR UPDATING POST (UNLIKE):",
+            updateError?.message
+          );
+          console.error("[LIKE-POST-DETAIL] Error code:", updateError?.code);
+          throw updateError;
+        }
       } else {
-        await updateDoc(postRef, {
-          likedByUsers: arrayUnion(user.uid),
-          likesCount: increment(1),
-        });
+        console.log("[LIKE-POST-DETAIL] Adding like to post...");
+        try {
+          await updateDoc(postRef, {
+            likedByUsers: arrayUnion(user.uid),
+            likesCount: increment(1),
+          });
+          console.log("[LIKE-POST-DETAIL] Like added to post successfully");
+        } catch (updateError: any) {
+          console.error(
+            "[LIKE-POST-DETAIL] ERROR UPDATING POST (LIKE):",
+            updateError?.message
+          );
+          console.error("[LIKE-POST-DETAIL] Error code:", updateError?.code);
+          throw updateError;
+        }
 
         // Create notification
         if (post.userId !== user.uid) {
-          await addDoc(collection(db, "notifications"), {
-            userId: post.userId,
-            fromUserId: user.uid,
-            type: "like",
-            postId: post.id,
-            postCaption: post.caption,
-            createdAt: serverTimestamp(),
-            read: false,
-          });
+          try {
+            await addDoc(collection(db, "notifications"), {
+              userId: post.userId,
+              fromUserId: user.uid,
+              type: "like",
+              postId: post.id,
+              postCaption: post.caption,
+              createdAt: serverTimestamp(),
+              read: false,
+            });
+            console.log("[LIKE-POST-DETAIL] Like notification created");
+          } catch (notifError: any) {
+            console.error(
+              "[LIKE-POST-DETAIL] ERROR CREATING NOTIFICATION:",
+              notifError?.message
+            );
+            // Don't throw - notification failure shouldn't prevent the like
+          }
         }
       }
-    } catch (err) {
-      console.error("Error toggling like:", err);
+    } catch (err: any) {
+      console.error("[LIKE-POST-DETAIL] Error toggling like:", err);
+      console.error("[LIKE-POST-DETAIL] Error code:", err?.code);
+      console.error("[LIKE-POST-DETAIL] Error message:", err?.message);
       Alert.alert("Error", "Failed to update like");
     } finally {
       setIsUpdatingLike(false);
@@ -301,7 +342,9 @@ const PostDetailScreen: React.FC = () => {
             <Image
               source={
                 post.userAvatar
-                  ? { uri: post.userAvatar }
+                  ? {
+                      uri: getOptimizedImageUrl(post.userAvatar, "thumbnail"),
+                    }
                   : require("../../assets/placeholderImg.jpg")
               }
               style={{
@@ -327,8 +370,8 @@ const PostDetailScreen: React.FC = () => {
           </View>
 
           {/* Post Image */}
-          <Image
-            source={{ uri: post.imageUrl }}
+          <ProgressiveImage
+            source={post.imageUrl}
             style={{
               width: width - 30,
               height: width - 30,

@@ -9,6 +9,7 @@ import {
   Keyboard,
   Text,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   collection,
   addDoc,
@@ -133,20 +134,11 @@ const CommentInput: React.FC<CommentInputProps> = ({
             (!text.trim() || isSubmitting) && styles.submitButtonDisabled,
           ]}
         >
-          <Text
-            style={[
-              styles.sendText,
-              {
-                color:
-                  !text.trim() || isSubmitting
-                    ? colors.textMuted
-                    : colors.bgPrimary,
-              },
-              (!text.trim() || isSubmitting) && styles.sendTextDisabled,
-            ]}
-          >
-            Send
-          </Text>
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={!text.trim() || isSubmitting ? colors.textMuted : "#FFFFFF"}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -192,13 +184,6 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: {
     backgroundColor: "#f0f0f0",
-  },
-  sendText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  sendTextDisabled: {
-    color: "#ccc",
   },
 });
 

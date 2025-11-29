@@ -7,9 +7,15 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useChat } from "../contexts/ChatContext";
+import { useAuth } from "../contexts/AuthContext";
 import { formatMessageTime, getMessagePreview } from "../services/chatUtils";
+import {
+  deleteConversation,
+  clearConversationMessages,
+} from "../services/conversationService";
 
 interface ConversationListProps {
   onSelectConversation: (conversationId: string) => void;
@@ -19,12 +25,51 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   onSelectConversation,
 }) => {
   const { conversations, conversationsLoading, totalUnreadCount } = useChat();
+  const { user } = useAuth();
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort(
       (a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp
     );
   }, [conversations]);
+
+  const handleLongPress = (
+    conversationId: string,
+    otherParticipantName: string
+  ) => {
+    Alert.alert(
+      "Delete Conversation",
+      `Delete conversation with ${otherParticipantName}?`,
+      [
+        {
+          text: "Clear Messages",
+          onPress: async () => {
+            try {
+              await clearConversationMessages(conversationId);
+              Alert.alert("Success", "Messages cleared");
+            } catch (error) {
+              console.error("Error clearing messages:", error);
+              Alert.alert("Error", "Failed to clear messages");
+            }
+          },
+        },
+        {
+          text: "Delete Conversation",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteConversation(conversationId, user?.uid || "");
+              Alert.alert("Success", "Conversation deleted");
+            } catch (error) {
+              console.error("Error deleting conversation:", error);
+              Alert.alert("Error", "Failed to delete conversation");
+            }
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
 
   if (conversationsLoading) {
     return (
@@ -46,9 +91,14 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   const renderConversationItem = ({ item }: any) => {
-    const otherParticipant = item.participantDetails
-      ? (Object.values(item.participantDetails)[0] as any)
-      : null;
+    // Get the OTHER participant (not the current user)
+    const otherParticipantId = item.participants.find(
+      (id: string) => id !== user?.uid
+    );
+    const otherParticipant =
+      otherParticipantId && item.participantDetails
+        ? item.participantDetails[otherParticipantId]
+        : null;
 
     const hasUnread = item.unreadCount > 0;
     const messagePreview = getMessagePreview(item.lastMessage);
@@ -60,6 +110,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           hasUnread && styles.unreadConversation,
         ]}
         onPress={() => onSelectConversation(item.id)}
+        onLongPress={() =>
+          handleLongPress(item.id, otherParticipant?.displayName || "Unknown")
+        }
+        delayLongPress={500}
       >
         <Image
           source={{

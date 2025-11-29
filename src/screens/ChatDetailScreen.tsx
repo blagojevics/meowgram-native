@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useChat } from "../contexts/ChatContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { MessageList } from "../components/MessageList";
 import { MessageInput } from "../components/MessageInput";
 import { TypingIndicator } from "../components/TypingIndicator";
@@ -41,6 +42,7 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({
     conversations,
   } = useChat();
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -145,13 +147,26 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({
   }, [navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.bgPrimary }]}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.bgPrimary}
+      />
 
       {/* Chat Header */}
-      <View style={styles.chatHeader}>
+      <View
+        style={[
+          styles.chatHeader,
+          {
+            backgroundColor: colors.bgPrimary,
+            borderBottomColor: colors.borderColor,
+          },
+        ]}
+      >
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#333" />
+          <Ionicons name="chevron-back" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.headerInfo} onPress={handleInfoPress}>
@@ -165,7 +180,7 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({
           />
 
           <View style={styles.headerTextContainer}>
-            <Text style={styles.headerName}>
+            <Text style={[styles.headerName, { color: colors.textPrimary }]}>
               {otherParticipant?.displayName || "Unknown"}
             </Text>
             {/* Online status removed - keeping only typing and read indicators */}
@@ -205,16 +220,13 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   chatHeader: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 10,
-    backgroundColor: "#fff",
     borderBottomWidth: 0.5,
-    borderBottomColor: "#f0f0f0",
     gap: 8,
   },
   backButton: {
@@ -237,11 +249,9 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#000",
   },
   headerStatus: {
     fontSize: 12,
-    color: "#999",
     marginTop: 2,
   },
   onlineStatus: {
@@ -250,7 +260,6 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   offlineStatus: {
-    color: "#999",
     fontSize: 12,
   },
   headerButton: {

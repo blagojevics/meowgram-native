@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useChat } from "../contexts/ChatContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface MessageInputProps {
   onSendMessage?: () => void;
@@ -20,6 +21,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   disabled = false,
 }) => {
   const { sendMessage, setTyping, selectedConversation } = useChat();
+  const { colors } = useTheme();
   const [messageText, setMessageText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,7 +69,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   return (
-    <View style={[styles.container, disabled && styles.disabledContainer]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.bgPrimary,
+          borderTopColor: colors.borderColor,
+        },
+        disabled && styles.disabledContainer,
+      ]}
+    >
       <TouchableOpacity
         style={[
           styles.iconButton,
@@ -80,9 +91,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       </TouchableOpacity>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { backgroundColor: colors.bgSecondary, color: colors.textPrimary },
+        ]}
         placeholder="Type a message..."
-        placeholderTextColor="#ccc"
+        placeholderTextColor={colors.textMuted}
         value={messageText}
         onChangeText={handleTypingChange}
         multiline
@@ -116,9 +130,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#fff",
     borderTopWidth: 0.5,
-    borderTopColor: "#f0f0f0",
     gap: 8,
   },
   disabledContainer: {
@@ -126,12 +138,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
-    color: "#333",
     maxHeight: 100,
   },
   iconButton: {
@@ -142,7 +152,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   sendButton: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "rgba(128, 128, 128, 0.1)",
   },
   disabledButton: {
     opacity: 0.5,

@@ -100,6 +100,7 @@ export default function Post({
   const lastTapTime = useRef(0);
   const likeAnimation = useRef(new Animated.Value(0)).current;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showOtherUserMenu, setShowOtherUserMenu] = useState(false);
 
   const [previewComments, setPreviewComments] = useState<CommentType[]>([]);
   const [totalComments, setTotalComments] = useState(0);
@@ -244,6 +245,8 @@ export default function Post({
   };
 
   const handleCopyLink = async () => {
+    setShowOptions(false);
+    setShowOtherUserMenu(false);
     try {
       const postUrl = `meowgram://post/${post.id}`; // Adjust for deep linking
       await Clipboard.setString(postUrl);
@@ -251,6 +254,33 @@ export default function Post({
     } catch (err) {
       console.error("Failed to copy link:", err);
     }
+  };
+
+  const handleShare = () => {
+    setShowOtherUserMenu(false);
+    Alert.alert("Share", "Share functionality coming soon!");
+  };
+
+  const handleReport = () => {
+    setShowOtherUserMenu(false);
+    Alert.alert(
+      "Report Post",
+      "Thank you for helping keep MeowGram safe. Our team will review this report.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Report",
+          style: "destructive",
+          onPress: () => {
+            console.log("Post reported:", post.id);
+            Alert.alert(
+              "Reported",
+              "This post has been reported to our moderation team."
+            );
+          },
+        },
+      ]
+    );
   };
 
   const handleDeletePost = () => {
@@ -368,7 +398,18 @@ export default function Post({
         </TouchableOpacity>
         {currentUser && currentUser.uid === post.userId && (
           <TouchableOpacity onPress={() => setShowOptions(!showOptions)}>
-            <Text style={styles.optionsText}>•••</Text>
+            <Text style={[styles.optionsText, { color: colors.textPrimary }]}>
+              •••
+            </Text>
+          </TouchableOpacity>
+        )}
+        {currentUser && currentUser.uid !== post.userId && (
+          <TouchableOpacity
+            onPress={() => setShowOtherUserMenu(!showOtherUserMenu)}
+          >
+            <Text style={[styles.optionsText, { color: colors.textPrimary }]}>
+              •••
+            </Text>
           </TouchableOpacity>
         )}
         {showOptions && (
@@ -442,6 +483,80 @@ export default function Post({
                     ]}
                   >
                     Copy Link
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+        {showOtherUserMenu && (
+          <View style={styles.optionsFullScreenOverlay}>
+            <TouchableWithoutFeedback
+              onPress={() => setShowOtherUserMenu(false)}
+            >
+              <View style={styles.optionsBackdrop} />
+            </TouchableWithoutFeedback>
+            <View style={styles.optionsOverlay}>
+              <View
+                style={[
+                  styles.postOptionsMenu,
+                  {
+                    backgroundColor: colors.bgPrimary,
+                    borderColor: colors.borderColor,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 4,
+                    elevation: 5,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.optionMenuItem}
+                  onPress={handleCopyLink}
+                >
+                  <Text
+                    style={[
+                      styles.optionMenuText,
+                      { color: colors.textPrimary },
+                    ]}
+                  >
+                    Copy Link
+                  </Text>
+                </TouchableOpacity>
+                <View
+                  style={[
+                    styles.optionSeparator,
+                    { backgroundColor: colors.borderColor },
+                  ]}
+                />
+                <TouchableOpacity
+                  style={styles.optionMenuItem}
+                  onPress={handleShare}
+                >
+                  <Text
+                    style={[
+                      styles.optionMenuText,
+                      { color: colors.textPrimary },
+                    ]}
+                  >
+                    Share
+                  </Text>
+                </TouchableOpacity>
+                <View
+                  style={[
+                    styles.optionSeparator,
+                    { backgroundColor: colors.borderColor },
+                  ]}
+                />
+                <TouchableOpacity
+                  style={styles.optionMenuItem}
+                  onPress={handleReport}
+                >
+                  <Text
+                    style={[styles.optionMenuText, { color: colors.danger }]}
+                  >
+                    Report
                   </Text>
                 </TouchableOpacity>
               </View>

@@ -90,28 +90,54 @@ export const getOrCreateConversation = async (
   const conversationId = [currentUserId, otherUserId].sort().join("_");
 
   try {
-    console.log(
-      "[ConversationService] Looking for conversation:",
-      conversationId
-    );
-    console.log("[ConversationService] Current user ID:", currentUserId);
-    console.log("[ConversationService] Other user ID:", otherUserId);
-    console.log(
-      "[ConversationService] Current user:",
-      currentUserData.username
-    );
-    console.log("[ConversationService] Other user:", otherUserData.username);
-
-    console.log(
-      "[ConversationService] Attempting to read conversation document..."
-    );
     const conversationDoc = await getDoc(
       doc(db, "conversations", conversationId)
     );
 
     if (conversationDoc.exists()) {
-      console.log("[ConversationService] Found existing conversation");
-      return conversationDoc.data() as Conversation;
+      const existingConv = conversationDoc.data() as Conversation;
+
+      // Only update if participantDetails is completely missing
+      // Don't update if it exists but might be outdated to save writes
+      if (!existingConv.participantDetails) {
+        console.log(
+          "[ConversationService] CRITICAL: Updating conversation with missing participantDetails"
+        );
+
+        // Update the conversation with proper participantDetails
+        await setDoc(
+          doc(db, "conversations", conversationId),
+          {
+            participantDetails: {
+              [currentUserId]: {
+                uid: currentUserData.uid,
+                username: currentUserData.username,
+                displayName:
+                  currentUserData.displayName || currentUserData.username,
+                avatarUrl:
+                  currentUserData.avatarUrl || currentUserData.profilePic || "",
+              },
+              [otherUserId]: {
+                uid: otherUserData.uid,
+                username: otherUserData.username,
+                displayName:
+                  otherUserData.displayName || otherUserData.username,
+                avatarUrl:
+                  otherUserData.avatarUrl || otherUserData.profilePic || "",
+              },
+            },
+          },
+          { merge: true }
+        );
+
+        // Return updated conversation
+        const updatedDoc = await getDoc(
+          doc(db, "conversations", conversationId)
+        );
+        return updatedDoc.data() as Conversation;
+      }
+
+      return existingConv;
     }
 
     console.log(
@@ -278,18 +304,23 @@ export const sendMessage = async (
     // Write message and update conversation in parallel
     const conversationRef = doc(db, "conversations", conversationId);
 
+    // Use setDoc with merge to preserve participantDetails
     await Promise.all([
       setDoc(doc(messagesRef, messageId), messageData),
-      updateDoc(conversationRef, {
-        lastMessage: {
-          id: messageId,
-          text: text.substring(0, 50),
-          senderId,
-          senderName,
+      setDoc(
+        conversationRef,
+        {
+          lastMessage: {
+            id: messageId,
+            text: text.substring(0, 50),
+            senderId,
+            senderName,
+          },
+          lastMessageTimestamp: now,
+          updatedAt: now,
         },
-        lastMessageTimestamp: now,
-        updatedAt: now,
-      }),
+        { merge: true }
+      ),
     ]);
 
     return messageData;
@@ -540,42 +571,29 @@ export const clearConversationMessages = async (
 };
 
 /**
- * Delete a conversation completely
+ * Delete a conversation for the current user (hide it from their view)
+ * The conversation remains visible for the other participant
  */
 export const deleteConversation = async (
   conversationId: string,
   userId: string
 ): Promise<void> => {
   try {
-    console.log("[ConversationService] Deleting conversation:", conversationId);
-
-    const batch = writeBatch(db);
-
-    // Delete all messages
-    const messagesRef = collection(
-      db,
-      "conversations",
+    console.log(
+      "[ConversationService] Hiding conversation for user:",
       conversationId,
-      "messages"
+      userId
     );
-    const messagesSnapshot = await getDocs(messagesRef);
-    messagesSnapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
 
-    // Delete conversation metadata for the user
-    const metadataId = `${userId}_${conversationId}`;
-    batch.delete(doc(db, "conversationUsers", metadataId));
-
-    // Archive the conversation instead of deleting it
-    // This preserves the conversation for the other participant
-    batch.update(doc(db, "conversations", conversationId), {
-      isArchived: true,
+    // Add user to deletedBy array to hide it from their view
+    await updateDoc(doc(db, "conversations", conversationId), {
+      deletedBy: arrayUnion(userId),
       updatedAt: Date.now(),
     });
 
-    await batch.commit();
-    console.log("[ConversationService] Successfully deleted conversation");
+    console.log(
+      "[ConversationService] Successfully hid conversation from user"
+    );
   } catch (error) {
     console.error("Error deleting conversation:", error);
     throw error;
@@ -630,7 +648,15 @@ export const subscribeToUserConversations = (
             const data = doc.data();
             return { id: doc.id, ...data } as Conversation;
           })
-          .filter((conv) => !conv.isArchived)
+          .filter((conv) => {
+            // Filter out archived conversations
+            if (conv.isArchived) return false;
+
+            // Filter out conversations deleted by current user
+            if (conv.deletedBy && conv.deletedBy.includes(userId)) return false;
+
+            return true;
+          })
           .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
 
         callback(conversations);

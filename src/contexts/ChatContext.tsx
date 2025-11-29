@@ -263,6 +263,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     const conversationId = selectedConversation.id;
     const userId = user.uid;
 
+    // Cleanup any existing subscription first to prevent duplicates
+    if (messagesUnsubscribeRef.current) {
+      messagesUnsubscribeRef.current();
+      messagesUnsubscribeRef.current = null;
+    }
+
     setMessagesLoading(true);
     setMessagesError(null);
 

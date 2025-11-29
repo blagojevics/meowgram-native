@@ -1,238 +1,371 @@
-# Meowgram — Mobile App
+# 🐱 MeowSpace
 
-Meowgram is a mobile-first social app for cat lovers. It lets users share photos, follow other cat profiles, and interact in a lightweight social feed designed for quick browsing and delightful interactions.
+<div align="center">
 
-This repository contains the mobile app source code (React Native / Expo or plain React Native depending on the project setup). Use this README as an entry point for running, developing, and contributing to the app.
+![App Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![React Native](https://img.shields.io/badge/React%20Native-0.81.5-61DAFB.svg)
+![Expo](https://img.shields.io/badge/Expo-~54.0.25-000020.svg)
 
----
+**A modern social media platform for sharing and discovering amazing cat photos**
 
-## Table of contents
+[Features](#-features) • [Screenshots](#-screenshots) • [Tech Stack](#-tech-stack) • [Installation](#-installation) • [Architecture](#-architecture) • [License](#-license)
 
-- [Features](#features)
-- [Tech stack](#tech-stack)
-- [Screenshots](#screenshots)
-- [Getting started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Install](#install)
-  - [Run (development)](#run-development)
-  - [Environment variables](#environment-variables)
-- [Building for release](#building-for-release)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Roadmap / Future plans](#roadmap--future-plans)
-- [License](#license)
-- [Contact](#contact)
+</div>
 
 ---
 
-## Features
+## 📱 Overview
 
-- User feed with photos and captions
-- Like and comment on posts
-- Follow / unfollow other users
-- Upload images from device camera or gallery
-- Basic profile page and settings
-- Offline-friendly image caching (if implemented)
-- Simple, responsive UI optimized for phones
+MeowSpace is a feature-rich, Instagram-inspired social media application built with React Native and Expo. Designed specifically for cat lovers, it provides a seamless platform for sharing photos, engaging with the community, and connecting through real-time messaging.
 
-(If the repository currently lacks any of the above, treat them as intended or partial features — check source code for real status.)
+The app leverages modern mobile development practices with Firebase for backend services, Cloudinary for optimized image delivery, and Socket.IO for real-time communication features.
 
----
+## ✨ Features
 
-## Tech stack
+### 🔐 Authentication & User Management
 
-- React Native/Expo — mobile UI
-- TypeScript
-- State management: React Context + React hooks
-- Networking: fetch / axios
-- Image uploads: Cloudinary
-- Backend: Firebase
-- Authentication: Firebase Auth (depending on implementation)
+- **Email/Password Authentication** - Secure user registration and login
+- **Google OAuth Integration** - One-tap sign-in with Google
+- **Profile Customization** - Editable profiles with avatar, bio, and display name
+- **Follow System** - Follow/unfollow users and build your network
+- **User Discovery** - Search and find other users
 
-Adjust the above to match the actual project's implementation details.
+### 📸 Content Sharing
 
----
+- **Photo Uploads** - Share your favorite cat photos with the community
+- **Image Cropping** - Built-in image editor for perfect framing
+- **Caption Support** - Add descriptions to your posts
+- **Progressive Image Loading** - Fast loading with thumbnail → full resolution
+- **Optimized Delivery** - Cloudinary CDN integration for blazing-fast image loads
 
-## Screenshots
+### 💬 Social Interactions
 
-### Screenshot 1
+- **Like & Comment** - Engage with posts through likes and comments
+- **Real-time Comments** - Live comment updates with Firestore listeners
+- **Post Details** - Detailed view with full comment threads
+- **User Mentions** - Tag users in captions and comments
+- **Activity Feed** - Track likes, comments, and new followers
 
-<img width="336" height="730" alt="image" src="https://github.com/user-attachments/assets/c94574c0-59dc-478f-b022-ef8ecf902901" />
+### 🗨️ Real-time Messaging
 
-### Screenshot 2
+- **Direct Messaging** - Private one-on-one conversations
+- **Message Threading** - Reply to specific messages
+- **Read Receipts** - See when messages are read
+- **Message Management** - Edit and delete your messages
+- **Conversation List** - All your chats in one place with unread badges
+- **Socket.IO Integration** - Real-time message delivery
+- **Media Sharing** - Send images in conversations
 
-<img width="336" height="730" alt="image" src="https://github.com/user-attachments/assets/1ac26b3e-c5d9-4e3b-b9e4-971d2406695b" />
+### 🔔 Notifications
 
-### Screenshot 3
+- **Activity Notifications** - Get notified about likes, comments, and follows
+- **Unread Badges** - Visual indicators for new activity
+- **Auto-read Marking** - Mark notifications as read when viewed
 
-<img width="340" height="734" alt="image" src="https://github.com/user-attachments/assets/038f4257-af46-4273-88e2-063c1353ddac" />
+### 🎨 User Experience
 
-### Screenshot 4
+- **Theme Support** - Consistent design system with ThemeContext
+- **Responsive Design** - Optimized for various screen sizes
+- **Smooth Animations** - Polished interactions and transitions
+- **Pull-to-Refresh** - Refresh content with a simple gesture
+- **Double-tap to Like** - Instagram-style interaction
+- **Offline Support** - Firebase persistence for offline functionality
 
-<img width="336" height="730" alt="image" src="https://github.com/user-attachments/assets/89927a55-0fa5-41db-8860-a9540e4c8b6a" />
+## 📸 Screenshots
 
-### Screenshot 5
+![alt text](dc.jpg)
+![alt text](Screenshot_1762370380.png)
 
-<img width="340" height="740" alt="image" src="https://github.com/user-attachments/assets/c05cd5ee-e68d-4ae3-beee-c518083e3a6f" />
+> **Note:** Add GIF or screenshots showcasing your app here
 
-## Getting started
+## 🛠️ Tech Stack
+
+### Frontend
+
+- **React Native** (0.81.5) - Cross-platform mobile framework
+- **Expo** (~54.0.25) - Development platform and toolchain
+- **TypeScript** (5.9.2) - Type-safe JavaScript
+- **React Navigation** (7.x) - Navigation library with stack and tab navigators
+- **Expo Image** - High-performance image component with caching
+
+### Backend & Services
+
+- **Firebase Authentication** - User authentication and management
+- **Cloud Firestore** - NoSQL database for real-time data
+- **Firebase Storage** - Cloud file storage
+- **Socket.IO Client** (4.8.1) - Real-time bidirectional communication
+
+### State Management
+
+- **React Context API** - Global state management
+  - `AuthContext` - Authentication state
+  - `ChatContext` - Messaging state and logic
+  - `ThemeContext` - Theme and styling
+
+### Image Processing
+
+- **Cloudinary** - CDN and image optimization
+- **Expo Image Picker** - Native image selection
+- **Expo Image Manipulator** - Image editing and cropping
+- **Jimp** (1.6.0) - JavaScript image processing
+
+### Development Tools
+
+- **EAS Build** - Cloud build service for native builds
+- **Expo Dev Client** - Custom development builds
+- **TypeScript** - Static type checking
+- **AsyncStorage** - Local storage for persistence
+
+## 📦 Installation
 
 ### Prerequisites
 
-- Node.js (LTS)
-- npm or yarn
-- Android Studio (for Android emulator) and/or Xcode (for iOS simulator / builds)
-- Java JDK (for Android)
-- A backend API (URL and API keys) or a local mock server if the app depends on one
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
+- **Expo CLI**: `npm install -g expo-cli`
+- **Android Studio** (for Android development)
+- **Xcode** (for iOS development, macOS only)
+- **EAS CLI** (optional, for builds): `npm install -g eas-cli`
 
-If this project uses Expo:
+### Environment Setup
 
-- expo-cli: `npm install -g expo-cli`
+1. **Clone the repository**
 
-### Install
-
-1. Clone the repository
+   ```bash
    git clone https://github.com/blagojevics/meowgram-mobile-app.git
-2. Enter the project directory
    cd meowgram-mobile-app
-3. Install dependencies
+   ```
+
+2. **Install dependencies**
+
+   ```bash
    npm install
-   or
-   yarn install
+   ```
 
-### Environment variables
+3. **Create environment configuration**
 
-Create a `.env` file at the project root (or follow the app-specific env pattern) and add variables required by the project. Example vars you might need:
+   Create a `.env` file in the root directory with the following variables:
+
+   ```env
+   # Firebase Configuration
+   EXPO_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+   # Cloudinary Configuration
+   EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+
+   # Google OAuth (optional)
+   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=your_web_client_id
+   EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=your_android_client_id
+   EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=your_ios_client_id
+   EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID=your_expo_client_id
+   ```
+
+4. **Update Firebase configuration in app.json**
+
+   Edit `app.json` and update the `extra` section with your Firebase credentials.
+
+### Firebase Setup
+
+1. **Create a Firebase Project**
+
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project
+   - Enable Authentication (Email/Password and Google)
+   - Create a Firestore Database
+   - Set up Firebase Storage
+
+2. **Deploy Firestore Security Rules**
+
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+
+3. **Firestore Collections Structure**
+   The app uses the following collections:
+   - `users` - User profiles
+   - `posts` - Photo posts
+   - `comments` - Post comments
+   - `notifications` - User notifications
+   - `conversations` - Chat conversations
+   - `conversationUsers` - Conversation metadata per user
+   - `userPresence` - User online status
+   - `typingIndicators` - Real-time typing indicators
+
+### Cloudinary Setup
+
+1. **Create a Cloudinary Account**
+   - Sign up at [Cloudinary](https://cloudinary.com/)
+   - Get your Cloud Name from the dashboard
+   - Create an unsigned upload preset in Settings → Upload
+
+### Running the App
+
+1. **Start Expo Development Server**
+
+   ```bash
+   npm start
+   # or
+   expo start
+   ```
+
+2. **Run on Android**
+
+   ```bash
+   npm run android
+   # or
+   expo run:android
+   ```
+
+3. **Run on iOS** (macOS only)
+
+   ```bash
+   npm run ios
+   # or
+   expo run:ios
+   ```
+
+4. **Run with Tunnel** (for testing on physical devices)
+   ```bash
+   npx expo start --tunnel
+   ```
+
+### Key Design Patterns
+
+#### Context-Based State Management
+
+- **AuthContext**: Manages user authentication state, login, registration, and logout
+- **ChatContext**: Handles messaging state, conversations, and real-time updates
+- **ThemeContext**: Provides consistent theming across the app
+
+#### Service Layer Architecture
+
+- Separation of business logic from UI components
+- Reusable service modules for Firebase, Cloudinary, and Socket.IO operations
+- Type-safe TypeScript interfaces for all data models
+
+#### Real-time Data Synchronization
+
+- Firestore listeners for instant updates on posts, comments, and messages
+- Socket.IO for real-time chat features
+- Optimistic UI updates for better perceived performance
+
+#### Performance Optimizations
+
+- Progressive image loading (thumbnail → full resolution)
+- Cloudinary transformations for optimized image delivery
+- Image caching strategy to reduce network requests
+- Lazy loading and pagination for large data sets
+
+## 🔒 Security
+
+### Firestore Security Rules
+
+The app implements comprehensive security rules (`firestore.rules`) covering:
+
+- User authentication requirements
+- Ownership validation for CRUD operations
+- Participant verification for conversations
+- Rate limiting and data validation
+
+### Data Privacy
+
+- Secure authentication with Firebase Auth
+- HTTPS-only communication
+- Environment variable protection for sensitive keys
+- Password hashing and secure token management
+
+## 🚀 Building for Production
+
+### Android APK/AAB Build
+
+```bash
+eas build --platform android --profile production
+```
+
+### iOS Build (requires Apple Developer account)
+
+```bash
+eas build --platform ios --profile production
+```
+
+### Local Android Build
+
+```bash
+eas build --platform android --profile apk --local
+```
+
+## 🧪 Testing
+
+The app includes utility scripts for testing and debugging:
+
+- `scripts/check-apk-abis.ps1` - Verify APK architectures
+- `scripts/install-and-log.ps1` - Install APK and view logs
+- `scripts/list-all-users.js` - List all registered users
+- `scripts/fix-usernames.js` - Database maintenance utilities
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ```
-API_URL=https://api.example.com
-GOOGLE_MAPS_API_KEY=your_key
-FIREBASE_API_KEY=your_key
-STORAGE_BUCKET=...
+MIT License
+
+Copyright (c) 2025 Stefan B.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
-Never commit real secret keys. Use `.env.example` to document required variables.
+## 👨‍💻 Author
 
-### Run (development)
+**Stefan B.** ([@blagoe](https://expo.dev/@blagoe))
 
-If this is an Expo app:
+## 🙏 Acknowledgments
 
-- Start Metro / Expo
-  npm start
-  or
-  yarn start
-- Use Expo Go on your device or run in an emulator:
-  - iOS: press `i` or run `expo run:ios`
-  - Android: press `a` or run `expo run:android`
+- [Expo](https://expo.dev/) - Amazing development platform
+- [Firebase](https://firebase.google.com/) - Backend infrastructure
+- [Cloudinary](https://cloudinary.com/) - Image optimization and delivery
+- [React Native Community](https://reactnative.dev/) - Excellent documentation and support
 
-If this is bare React Native:
+## 📧 Support
 
-- Start Metro
-  npm run start
-- Run on Android
-  npm run android
-- Run on iOS
-  npm run ios
-
-Refer to package.json scripts for exact commands.
+For support, email support@meowspace.app or open an issue on GitHub.
 
 ---
 
-## Building for release
+<div align="center">
 
-Android:
-
-- Generate a release keystore
-- Configure `android/app/build.gradle` with keystore settings
-- `cd android && ./gradlew assembleRelease`
-
-iOS:
-
-- Open `ios/Meowgram.xcworkspace` in Xcode
-- Set signing & capabilities
-- Archive and export for App Store submission
-
-If using Expo, follow Expo's build docs:
-
-- `eas build` (recommended)
-- Or `expo build:android` / `expo build:ios` for classic builds (depending on Expo version)
-
----
-
-## Testing
-
-- Unit tests: (Jest) — run `npm test` or `yarn test` if tests exist
-- E2E tests: (Detox / Appium) — configure device/emulator and run test commands if implemented
-
-Add tests as features are stabilized.
-
----
-
-## Contributing
-
-We welcome contributions!
-
-- Fork the repo
-- Create a feature branch: `git checkout -b feat/my-feature`
-- Make changes and add tests
-- Open a pull request describing your changes
-
-Please follow existing code style and add documentation for new features. If you're not sure where to start, check the issues or open one requesting guidance.
-
----
-
-## Roadmap / Future plans
-
-Planned enhancements (short/medium term):
-
-- Google Sign-In
-
-  - Add OAuth-based authentication so users can sign in with Google accounts.
-  - Support linking existing accounts and account recovery flows.
-
-- Chat / Direct Messaging
-
-  - Real-time chat between users (1:1 DMs, group chats).
-  - Typing indicators, read receipts, message attachments.
-
-- iOS App Store release
-
-  - Prepare an App Store listing, screenshots, privacy policy, and comply with App Store review guidelines.
-  - Implement App Store-specific build and CI pipelines.
-
-- More styling and features
-
-  - UI polish and consistent design system.
-  - Additional profile customization, reactions, post editing, and advanced search/filtering.
-  - Accessibility improvements and internationalization.
-
-- Other possible items
-  - Push notifications (Firebase / APNs)
-  - Content moderation tools and reporting
-  - Analytics and crash reporting
-  - Performance improvements and offline sync
-
-If you'd like to prioritize or expand any of these, open issues or assign tasks and I can help break them down into actionable PRs.
-
----
-
-## Known issues / Troubleshooting
-
-- If images fail to upload, verify `API_URL`, storage credentials, and CORS settings on the backend.
-- If Android build fails with gradle errors, try clearing Gradle cache and running `cd android && ./gradlew clean`.
-- For iOS code signing problems, ensure correct provisioning profiles and team settings in Xcode.
-
-Add project-specific troubleshooting steps as they arise.
-
----
-
-## License
-
-MIT © 2025 blagojevics
-
----
-
-## Contact
-
-Maintainer: blagojevics  
-Repo: https://github.com/blagojevics/meowgram-mobile-app
+</div>

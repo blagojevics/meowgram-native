@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useChat } from "../contexts/ChatContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   formatFullTime,
   isMessageDeleted,
@@ -27,19 +28,12 @@ export const MessageList: React.FC<MessageListProps> = ({
   const { messages, messagesLoading, selectedConversation, markAsRead } =
     useChat();
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const flatListRef = useRef<FlatList>(null);
   const previousMessageCountRef = useRef(0);
 
-  // Mark visible messages as read
-  useEffect(() => {
-    messages.forEach((message) => {
-      if (!isMessageDeleted(message) && message.senderId !== user?.uid) {
-        markAsRead(message.id).catch((error) =>
-          console.error("Error marking message as read:", error)
-        );
-      }
-    });
-  }, [messages, user?.uid, markAsRead]);
+  // Mark-as-read disabled to prevent errors on non-existent message documents
+  // Messages are marked as read when conversation is opened via markConversationAsRead
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -54,7 +48,9 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   if (messagesLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={[styles.loadingContainer, { backgroundColor: colors.bgPrimary }]}
+      >
         <ActivityIndicator size="large" color="#FF6B6B" />
       </View>
     );
@@ -62,9 +58,13 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   if (messages.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No messages yet</Text>
-        <Text style={styles.emptySubText}>
+      <View
+        style={[styles.emptyContainer, { backgroundColor: colors.bgPrimary }]}
+      >
+        <Text style={[styles.emptyText, { color: colors.textPrimary }]}>
+          No messages yet
+        </Text>
+        <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>
           Start the conversation by sending a message
         </Text>
       </View>
@@ -96,7 +96,12 @@ export const MessageList: React.FC<MessageListProps> = ({
         <TouchableOpacity
           style={[
             styles.messageBubble,
-            isOwnMessage ? styles.ownBubble : styles.otherBubble,
+            isOwnMessage
+              ? styles.ownBubble
+              : [
+                  styles.otherBubble,
+                  { backgroundColor: isDark ? colors.bgTertiary : "#f0f0f0" },
+                ],
             isDeleted && styles.deletedBubble,
           ]}
           onLongPress={() => {
@@ -108,7 +113,9 @@ export const MessageList: React.FC<MessageListProps> = ({
         >
           {/* Message header with sender name for others' messages */}
           {!isOwnMessage && (
-            <Text style={styles.senderName}>{message.senderName}</Text>
+            <Text style={[styles.senderName, { color: colors.textSecondary }]}>
+              {message.senderName}
+            </Text>
           )}
 
           {/* Reply-to indicator */}
@@ -127,8 +134,13 @@ export const MessageList: React.FC<MessageListProps> = ({
           <Text
             style={[
               styles.messageText,
-              isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
-              isDeleted && styles.deletedMessageText,
+              isOwnMessage
+                ? styles.ownMessageText
+                : { color: colors.textPrimary },
+              isDeleted && [
+                styles.deletedMessageText,
+                { color: colors.textMuted },
+              ],
             ]}
           >
             {isDeleted ? "[Message deleted]" : message.text}
@@ -152,7 +164,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             <Text
               style={[
                 styles.messageTime,
-                isOwnMessage ? styles.ownTime : styles.otherTime,
+                isOwnMessage ? styles.ownTime : { color: colors.textMuted },
               ]}
             >
               {getTimeDiffFromNow(message.timestamp)}
@@ -197,12 +209,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
-    color: "#999",
     textAlign: "center",
   },
   listContent: {
@@ -237,17 +247,14 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: "#f0f0f0",
     borderBottomLeftRadius: 4,
   },
   deletedBubble: {
     opacity: 0.6,
-    backgroundColor: "#e0e0e0",
   },
   senderName: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#666",
     marginBottom: 2,
   },
   replyToContainer: {
@@ -276,12 +283,9 @@ const styles = StyleSheet.create({
   ownMessageText: {
     color: "#fff",
   },
-  otherMessageText: {
-    color: "#333",
-  },
+  otherMessageText: {},
   deletedMessageText: {
     fontStyle: "italic",
-    color: "#999",
   },
   mediaContainer: {
     flexDirection: "row",
@@ -306,9 +310,7 @@ const styles = StyleSheet.create({
   ownTime: {
     color: "rgba(255, 255, 255, 0.7)",
   },
-  otherTime: {
-    color: "#999",
-  },
+  otherTime: {},
   readIndicator: {
     color: "rgba(255, 255, 255, 0.7)",
     fontSize: 10,

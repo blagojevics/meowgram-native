@@ -34,6 +34,7 @@ export interface Conversation {
   updatedAt: number;
   unreadCount: number; // for current user
   isArchived: boolean;
+  deletedBy?: string[]; // array of user IDs who have deleted/hidden this conversation
 }
 
 /**

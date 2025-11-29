@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useChat } from "../contexts/ChatContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { formatMessageTime, getMessagePreview } from "../services/chatUtils";
 import { getUserProfile } from "../services/userService";
 
@@ -25,6 +26,7 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
   navigation,
 }) => {
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const {
     conversations,
     conversationsLoading,
@@ -153,7 +155,11 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
       <TouchableOpacity
         style={[
           styles.conversationItem,
-          hasUnread && styles.unreadConversation,
+          { borderBottomColor: colors.borderLight },
+          hasUnread && [
+            styles.unreadConversation,
+            { backgroundColor: colors.bgSecondary },
+          ],
         ]}
         onPress={() => handleSelectConversation(conversation)}
         activeOpacity={0.7}
@@ -173,18 +179,29 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
         <View style={styles.conversationContent}>
           <View style={styles.conversationHeader}>
             <Text
-              style={[styles.conversationName, hasUnread && styles.unreadName]}
+              style={[
+                styles.conversationName,
+                { color: colors.textPrimary },
+                hasUnread && [styles.unreadName, { color: colors.textPrimary }],
+              ]}
               numberOfLines={1}
             >
               {otherParticipant?.displayName || "Unknown"}
             </Text>
-            <Text style={styles.timestamp}>
+            <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
               {formatMessageTime(conversation.lastMessageTimestamp)}
             </Text>
           </View>
 
           <Text
-            style={[styles.messagePreview, hasUnread && styles.unreadMessage]}
+            style={[
+              styles.messagePreview,
+              { color: colors.textSecondary },
+              hasUnread && [
+                styles.unreadMessage,
+                { color: colors.textPrimary },
+              ],
+            ]}
             numberOfLines={2}
           >
             {messagePreview}
@@ -203,10 +220,14 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="chatbubble-outline" size={64} color="#ccc" />
-      <Text style={styles.emptyText}>No conversations yet</Text>
-      <Text style={styles.emptySubText}>
+    <View
+      style={[styles.emptyContainer, { backgroundColor: colors.bgPrimary }]}
+    >
+      <Ionicons name="chatbubble-outline" size={64} color={colors.textMuted} />
+      <Text style={[styles.emptyText, { color: colors.textPrimary }]}>
+        No conversations yet
+      </Text>
+      <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>
         Start chatting with your MeowGram friends
       </Text>
       <TouchableOpacity style={styles.emptyButton} onPress={handleNewChat}>
@@ -216,37 +237,67 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.bgPrimary }]}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.bgPrimary}
+      />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.bgPrimary,
+            borderBottomColor: colors.borderColor,
+          },
+        ]}
+      >
         <View>
-          <Text style={styles.headerTitle}>Messages</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            Messages
+          </Text>
           {totalUnreadCount > 0 && (
             <Text style={styles.headerSubtitle}>{totalUnreadCount} unread</Text>
           )}
         </View>
-        <TouchableOpacity style={styles.newChatButton} onPress={handleNewChat}>
+        <TouchableOpacity
+          style={[
+            styles.newChatButton,
+            { backgroundColor: colors.bgSecondary },
+          ]}
+          onPress={handleNewChat}
+        >
           <Ionicons name="create" size={24} color="#FF6B6B" />
         </TouchableOpacity>
       </View>
 
       {/* Conversations List */}
       {conversationsLoading || isEnhancing ? (
-        <View style={styles.loadingContainer}>
+        <View
+          style={[
+            styles.loadingContainer,
+            { backgroundColor: colors.bgPrimary },
+          ]}
+        >
           <ActivityIndicator size="large" color="#FF6B6B" />
-          <Text style={styles.loadingText}>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
             {conversationsLoading
               ? "Loading conversations..."
               : "Preparing conversations..."}
           </Text>
         </View>
       ) : conversationsError ? (
-        <View style={styles.errorContainer}>
+        <View
+          style={[styles.errorContainer, { backgroundColor: colors.bgPrimary }]}
+        >
           <Ionicons name="alert-circle" size={48} color="#FF6B6B" />
           <Text style={styles.errorText}>Error loading conversations</Text>
-          <Text style={styles.errorSubText}>{conversationsError.message}</Text>
+          <Text style={[styles.errorSubText, { color: colors.textSecondary }]}>
+            {conversationsError.message}
+          </Text>
         </View>
       ) : sortedConversations.length === 0 ? (
         renderEmptyState()
@@ -267,14 +318,16 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
             contentContainerStyle={styles.listContent}
             scrollEnabled={true}
             showsVerticalScrollIndicator={true}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                colors={["#FF6B6B"]}
-                tintColor="#FF6B6B"
-              />
-            }
+            // Pull-to-refresh disabled to reduce Firestore quota usage
+            // Each refresh triggers re-reading all conversations
+            // refreshControl={
+            //   <RefreshControl
+            //     refreshing={refreshing}
+            //     onRefresh={handleRefresh}
+            //     colors={["#FF6B6B"]}
+            //     tintColor="#FF6B6B"
+            //   />
+            // }
           />
         </>
       )}
@@ -285,7 +338,6 @@ export const ConversationListScreen: React.FC<ConversationListScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -293,14 +345,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
     borderBottomWidth: 0.5,
-    borderBottomColor: "#f0f0f0",
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: "800",
-    color: "#000",
   },
   headerSubtitle: {
     fontSize: 12,
@@ -312,7 +361,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#f5f5f5",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -336,11 +384,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     borderBottomWidth: 0.5,
-    borderBottomColor: "#f5f5f5",
   },
-  unreadConversation: {
-    backgroundColor: "#fafafa",
-  },
+  unreadConversation: {},
   avatarContainer: {
     position: "relative",
     marginRight: 12,
@@ -373,27 +418,22 @@ const styles = StyleSheet.create({
   conversationName: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#333",
     flex: 1,
     marginRight: 8,
   },
   unreadName: {
     fontWeight: "700",
-    color: "#000",
   },
   timestamp: {
     fontSize: 12,
-    color: "#999",
     minWidth: 50,
     textAlign: "right",
   },
   messagePreview: {
     fontSize: 13,
-    color: "#666",
     lineHeight: 18,
   },
   unreadMessage: {
-    color: "#333",
     fontWeight: "500",
   },
   unreadBadge: {
@@ -419,7 +459,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: "#666",
   },
   errorContainer: {
     flex: 1,
@@ -436,7 +475,6 @@ const styles = StyleSheet.create({
   },
   errorSubText: {
     fontSize: 13,
-    color: "#999",
     textAlign: "center",
   },
   emptyContainer: {
@@ -449,13 +487,11 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
-    color: "#999",
     textAlign: "center",
     marginBottom: 32,
   },

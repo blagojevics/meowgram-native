@@ -8,7 +8,10 @@ import {
   ActivityIndicator,
   ScrollView,
   Dimensions,
+  Modal,
+  Share as RNShare,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,6 +33,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import timeFormat from "../config/timeFormat";
 import CommentInput from "../components/CommentInput";
@@ -73,6 +77,7 @@ const PostDetailScreen: React.FC = () => {
   const route = useRoute<PostDetailScreenRouteProp>();
   const navigation = useNavigation<PostDetailScreenNavigationProp>();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   const postId = route.params?.postId;
   const [post, setPost] = useState<Post | null>(null);
@@ -83,6 +88,7 @@ const PostDetailScreen: React.FC = () => {
   const [isUpdatingLike, setIsUpdatingLike] = useState(false);
   const [userDoc, setUserDoc] = useState<any>(null);
   const [showLikes, setShowLikes] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Fetch current user document
   useEffect(() => {
@@ -269,6 +275,48 @@ const PostDetailScreen: React.FC = () => {
     ]);
   };
 
+  const handleCopyLink = async () => {
+    setShowMenu(false);
+    try {
+      // For now, using a placeholder link format
+      const link = `meowgram://post/${postId}`;
+      await Clipboard.setStringAsync(link);
+      Alert.alert("Link Copied", "Post link copied to clipboard");
+    } catch (err) {
+      console.error("Error copying link:", err);
+      Alert.alert("Error", "Failed to copy link");
+    }
+  };
+
+  const handleShare = () => {
+    setShowMenu(false);
+    // Placeholder for share functionality
+    Alert.alert("Share", "Share functionality coming soon!");
+  };
+
+  const handleReport = () => {
+    setShowMenu(false);
+    Alert.alert(
+      "Report Post",
+      "Thank you for helping keep MeowGram safe. Our team will review this report.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Report",
+          style: "destructive",
+          onPress: () => {
+            // Placeholder - would send email or create report document
+            console.log("Post reported:", postId);
+            Alert.alert(
+              "Reported",
+              "This post has been reported to our moderation team."
+            );
+          },
+        },
+      ]
+    );
+  };
+
   const handleDeleteComment = async (comment: Comment) => {
     if (!user || (comment.authorId !== user.uid && post?.userId !== user.uid))
       return;
@@ -289,10 +337,17 @@ const PostDetailScreen: React.FC = () => {
   if (loading) {
     return (
       <SafeAreaView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.bgPrimary,
+        }}
       >
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{ marginTop: 10 }}>Loading post...</Text>
+        <Text style={{ marginTop: 10, color: colors.textPrimary }}>
+          Loading post...
+        </Text>
       </SafeAreaView>
     );
   }
@@ -300,15 +355,20 @@ const PostDetailScreen: React.FC = () => {
   if (!post) {
     return (
       <SafeAreaView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.bgPrimary,
+        }}
       >
-        <Text>Post not found</Text>
+        <Text style={{ color: colors.textPrimary }}>Post not found</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
       {/* Header */}
       <View
         style={{
@@ -317,18 +377,26 @@ const PostDetailScreen: React.FC = () => {
           paddingHorizontal: 15,
           paddingVertical: 10,
           borderBottomWidth: 1,
-          borderBottomColor: "#eee",
+          borderBottomColor: colors.borderColor,
+          backgroundColor: colors.bgPrimary,
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={{ fontSize: 18, color: "#007AFF" }}>← Back</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: "600", marginLeft: 20 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "600",
+            marginLeft: 20,
+            color: colors.textPrimary,
+          }}
+        >
           Post
         </Text>
       </View>
 
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
         {/* Post Content */}
         <View style={{ padding: 15 }}>
           {/* Post Header */}
@@ -355,17 +423,42 @@ const PostDetailScreen: React.FC = () => {
               }}
             />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: "600", fontSize: 16 }}>
+              <Text
+                style={{
+                  fontWeight: "600",
+                  fontSize: 16,
+                  color: colors.textPrimary,
+                }}
+              >
                 {post.username || "Unknown User"}
               </Text>
-              <Text style={{ color: "#666", fontSize: 12 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
                 {post.createdAt ? timeFormat(post.createdAt) : "Just now"}
               </Text>
             </View>
-            {user && user.uid === post.userId && (
-              <TouchableOpacity onPress={handleDeletePost}>
-                <Text style={{ fontSize: 20, color: "#666" }}>⋯</Text>
-              </TouchableOpacity>
+            {user && (
+              <>
+                {user.uid === post.userId ? (
+                  <TouchableOpacity onPress={handleDeletePost}>
+                    <Text style={{ fontSize: 20, color: colors.textPrimary }}>
+                      ⋯
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => {
+                      console.log("Opening menu for other user post");
+                      console.log("Current user:", user.uid);
+                      console.log("Post owner:", post.userId);
+                      setShowMenu(true);
+                    }}
+                  >
+                    <Text style={{ fontSize: 20, color: colors.textPrimary }}>
+                      ⋯
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
 
@@ -400,7 +493,7 @@ const PostDetailScreen: React.FC = () => {
               <FontAwesome
                 name="paw"
                 size={22}
-                color={isLiked ? "#e74c3c" : "gray"}
+                color={isLiked ? "#e74c3c" : colors.textSecondary}
                 style={{ marginRight: 0 }}
               />
             </TouchableOpacity>
@@ -413,23 +506,34 @@ const PostDetailScreen: React.FC = () => {
                 marginRight: 10,
               }}
             >
-              <Text style={{ fontSize: 16 }}>{likesCount}</Text>
+              <Text style={{ fontSize: 16, color: colors.textPrimary }}>
+                {likesCount}
+              </Text>
             </TouchableOpacity>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <FontAwesome
                 name="comment"
                 size={20}
-                color="gray"
+                color={colors.textSecondary}
                 style={{ marginRight: 5 }}
               />
-              <Text style={{ fontSize: 16 }}>{comments.length}</Text>
+              <Text style={{ fontSize: 16, color: colors.textPrimary }}>
+                {comments.length}
+              </Text>
             </View>
           </View>
 
           {/* Post Caption */}
           {post.caption && (
-            <Text style={{ fontSize: 16, lineHeight: 22, marginBottom: 15 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                lineHeight: 22,
+                marginBottom: 15,
+                color: colors.textPrimary,
+              }}
+            >
               {post.caption}
             </Text>
           )}
@@ -439,19 +543,27 @@ const PostDetailScreen: React.FC = () => {
         <View
           style={{
             borderTopWidth: 1,
-            borderTopColor: "#eee",
+            borderTopColor: colors.borderColor,
             paddingHorizontal: 15,
             paddingTop: 10,
+            backgroundColor: colors.bgPrimary,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 15 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "600",
+              marginBottom: 15,
+              color: colors.textPrimary,
+            }}
+          >
             Comments ({comments.length})
           </Text>
 
           {comments.length === 0 ? (
             <Text
               style={{
-                color: "#666",
+                color: colors.textSecondary,
                 textAlign: "center",
                 paddingVertical: 20,
               }}
@@ -474,7 +586,13 @@ const PostDetailScreen: React.FC = () => {
       </ScrollView>
 
       {currentUser ? (
-        <View style={{ paddingHorizontal: 15, paddingVertical: 10 }}>
+        <View
+          style={{
+            paddingHorizontal: 15,
+            paddingVertical: 10,
+            backgroundColor: colors.bgPrimary,
+          }}
+        >
           <CommentInput
             post={post}
             postId={postId!}
@@ -482,8 +600,8 @@ const PostDetailScreen: React.FC = () => {
           />
         </View>
       ) : (
-        <View style={{ padding: 15, backgroundColor: "#f8f8f8" }}>
-          <Text style={{ textAlign: "center", color: "#666" }}>
+        <View style={{ padding: 15, backgroundColor: colors.bgSecondary }}>
+          <Text style={{ textAlign: "center", color: colors.textSecondary }}>
             Log in to comment
           </Text>
         </View>
@@ -494,6 +612,92 @@ const PostDetailScreen: React.FC = () => {
         onClose={() => setShowLikes(false)}
         likedByUsers={post.likedByUsers || []}
       />
+
+      {/* Menu Modal for other users' posts */}
+      {console.log("Modal showMenu state:", showMenu)}
+      <Modal
+        visible={showMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          activeOpacity={1}
+          onPress={() => setShowMenu(false)}
+        >
+          <View
+            style={{
+              backgroundColor: colors.bgPrimary,
+              borderRadius: 12,
+              width: "80%",
+              maxWidth: 300,
+              overflow: "hidden",
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.borderColor,
+              }}
+              onPress={handleCopyLink}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: colors.textPrimary,
+                  textAlign: "center",
+                }}
+              >
+                Copy Link
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.borderColor,
+              }}
+              onPress={handleShare}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: colors.textPrimary,
+                  textAlign: "center",
+                }}
+              >
+                Share
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                padding: 16,
+              }}
+              onPress={handleReport}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: "#FF3B30",
+                  textAlign: "center",
+                  fontWeight: "600",
+                }}
+              >
+                Report
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };

@@ -1,12 +1,6 @@
-# 🐱 MeowSpace
+# MeowSpace
 
 <div align="center">
-
-![App Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![React Native](https://img.shields.io/badge/React%20Native-0.81.5-61DAFB.svg)
-![Expo](https://img.shields.io/badge/Expo-~54.0.25-000020.svg)
 
 **A modern social media platform for sharing and discovering amazing cat photos**
 

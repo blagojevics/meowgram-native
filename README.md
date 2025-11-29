@@ -75,10 +75,10 @@ The app leverages modern mobile development practices with Firebase for backend 
 
 ## 📸 Screenshots
 
-![alt text](dc.jpg)
-![alt text](Screenshot_1762370380.png)
-
-> **Note:** Add GIF or screenshots showcasing your app here
+<div align="center">
+  <img src="dc.jpg" alt="MeowSpace Screenshot1" width="300" />
+  <img src="Screenshot_1762370380.png" alt="MeowSpace Screenshot2" width="300" />
+</div>
 
 ## 🛠️ Tech Stack
 
